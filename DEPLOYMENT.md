@@ -101,3 +101,4 @@ $ curl -s -w " %{http_code}\n" -X POST .../ask -H "Content-Type: application/jso
 
 - `screenshots/dashboard.png` — trang quản lý service trên platform
 - `screenshots/health.png` — kết quả gọi `/health` từ trình duyệt hoặc curl
+- `screenshots/build-logs.png` — Build Logs trên Railway: các layer dùng lại cache, image được push lên
