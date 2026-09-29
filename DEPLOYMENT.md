@@ -10,17 +10,17 @@
 
 | Mục | Nội dung |
 |-----|----------|
-| Họ và tên | (điền họ tên) |
-| Mã học viên | (điền mã học viên) |
-| Repo | (điền link repo K4-L3B-DAY12-HoVaTen-MSSV-CloudServicesAndDeployment) |
+| Họ và tên | Đặng Đỉnh Đoàn |
+| Mã học viên | 2A202602927 |
+| Repo | https://github.com/Doan0904/K4-L3B-DAY12-DangDinhDoan-2A202602927-CloudServicesAndDeployment |
 
 ## Service
 
 | Mục | Nội dung |
 |-----|----------|
-| Public URL | https://TODO-thay-bang-url-that.up.railway.app |
-| Platform | Railway / Render / Cloud Run — (điền platform bạn dùng) |
-| Ngày deploy | (điền ngày) |
+| Public URL | https://agent-production-e023.up.railway.app |
+| Platform | Railway (build từ Dockerfile, deploy tự động qua GitHub Actions `railway up`) |
+| Ngày deploy | 2026-09-29 |
 
 ## Biến Môi Trường Đã Set Trên Cloud
 
@@ -30,7 +30,7 @@ Ghi tên biến và **nguồn giá trị**, không ghi giá trị:
 |------|--------|---------|
 | `PORT` | ✅ | platform tự gán |
 | `AGENT_API_KEY` | ✅ | đặt trong dashboard, không nằm trong repo |
-| `REDIS_URL` | ✅ | (điền: Redis add-on của platform / Upstash / ...) |
+| `REDIS_URL` | ✅ | Redis add-on của Railway, tham chiếu `${{Redis.REDIS_URL}}` |
 | `RATE_LIMIT_PER_MINUTE` | ✅ | 10 |
 | `MONTHLY_BUDGET_USD` | ✅ | 10.0 |
 | `LOG_LEVEL` | ✅ | INFO |
@@ -73,8 +73,27 @@ done; echo
 Dán output của các lệnh trên vào đây:
 
 ```
-(điền output)
+# 1. Liveness
+$ curl -s -w " %{http_code}\n" https://agent-production-e023.up.railway.app/health
+{"status":"ok","service":"day12-agent","version":"1.0.0"} 200
+
+# 2. Readiness
+$ curl -s -w " %{http_code}\n" https://agent-production-e023.up.railway.app/ready
+{"status":"ready","redis":true} 200
+
+# 3. Không có API key
+$ curl -s -w " %{http_code}\n" -X POST .../ask -H "Content-Type: application/json" -d '{"question":"Hello"}'
+{"detail":"invalid or missing API key"} 401
+
+# 4. Có API key (X-User-Id: sv-test)
+{"answer":"Câu hỏi hay. Deploy là gì thường được giải quyết bằng cách chuẩn hóa môi trường chạy: cùng một image chạy giống nhau ở laptop và trên cloud.","user_id":"sv-test","history_length":0,"cost_usd":2.145e-05,"tokens":{"in":3,"out":35}} 200
+
+# 5. Rate limit — 15 request liên tiếp cùng một user
+200 200 200 200 200 200 200 200 200 200 429 429 429 429 429
 ```
+
+`pytest tests/test_cp5.py -v`: 5 test gọi vào bản deploy (HTTPS, `/health`,
+`/ready`, `/ask` không key → 401, `/ask` có key → 200) đều pass.
 
 ## Ảnh Chụp Màn Hình
 
@@ -82,20 +101,3 @@ Dán output của các lệnh trên vào đây:
 
 - `screenshots/dashboard.png` — trang quản lý service trên platform
 - `screenshots/health.png` — kết quả gọi `/health` từ trình duyệt hoặc curl
-
----
-
-## Nếu Dùng Phương Án Dự Phòng
-
-Không đăng ký được tài khoản cloud? Vẫn nộp được bài, nhưng CP5 tối đa 60% điểm:
-
-1. Đặt `LOCAL_FALLBACK=true` trong `.env`
-2. Chạy `docker compose up -d` rồi kiểm tra `docker compose ps`
-3. Chụp màn hình vào `screenshots/`
-4. Chạy `pytest tests/test_cp5.py -v` — bộ test sẽ tự chuyển sang kiểm tra
-   `http://localhost:8000`
-5. Ghi rõ lý do không deploy được vào phần dưới đây:
-
-```
-(điền lý do nếu dùng phương án dự phòng, ngược lại xóa mục này)
-```
